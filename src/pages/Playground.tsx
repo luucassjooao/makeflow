@@ -17,6 +17,7 @@ import {
 } from "../components/ui/select";
 import { ListPlus, PlusSquare } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 interface IOptions {
   id: number;
@@ -41,6 +42,14 @@ interface IChildrens {
 
 interface IPhrasesObj {
   phrases: string;
+  layer: number;
+}
+
+interface IOptionToAddChildren {
+  indexArrayFather: number;
+  indexArrayChildren: number;
+  id: number;
+  label: string;
   layer: number;
 }
 
@@ -115,7 +124,7 @@ export function Playground() {
     mainOption: "",
     childrens: [],
   });
-  const [optionToAddChildren, setOptionToAddChildren] = useState<IOptions>()
+  const [optionToAddChildren, setOptionToAddChildren] = useState<IOptionToAddChildren>()
 
   console.log(optionsChildrens);
 
@@ -191,15 +200,31 @@ export function Playground() {
     }
   }
 
-  function addNewChildrenModal(id: number) {
+  function handleAddNewChildrenInSpecificArrayLayer(
+    childrenOption: string,
+    fatherOption: string
+  ) {
+    const findFatherInOptionsArrayChildrens = optionsChildrens.childrens
+  }
+
+  function addNewChildrenModal(id: number, indexArrayFather: number, indexArrayChildren: number) {
     const findOption = options.find((i) => i.id === id);
 
     if (!findOption) {
       toast('fail')
+      return;
     }
     toast('success')
 
-    setOptionToAddChildren(findOption as IOptions);
+    const obj: IOptionToAddChildren = {
+      id: findOption.id,
+      label: findOption.label,
+      layer: findOption.layer,
+      indexArrayFather, 
+      indexArrayChildren
+    }
+
+    setOptionToAddChildren(obj);
 
     setOpenModal(prevState => prevState !== true)
   }
@@ -228,16 +253,16 @@ export function Playground() {
                   {option.label}
                 </button>
                 <button>
-                  <PlusSquare color="red" onClick={() => addNewChildrenModal(option.id)} />
+                  <PlusSquare color="red" onClick={() => addNewChildrenModal(option.id, 1, 1)} />
                 </button>
               </div>
             ))}
           </div>
           <div>
-            {optionsChildrens?.childrens.map((option) => {
+            {optionsChildrens?.childrens.map((option, indexArrayFather) => {
               return (
                 <div key={Math.random()} className="flex">
-                  {option.map((item) => (
+                  {option.map((item, indexArrayChildren) => (
                     <div className="items-center justify-center flex flex-col">
                       {item.type === "step" && (
                         <button
@@ -264,7 +289,7 @@ export function Playground() {
                         </h2>
                       )}
                       <button className="block items-center justify-center">
-                        <PlusSquare color="red" onClick={() => addNewChildrenModal(item.id)} />
+                        <PlusSquare color="red" onClick={() => addNewChildrenModal(item.id, indexArrayFather, indexArrayChildren)} />
                       </button>
                     </div>
                   ))}
@@ -305,6 +330,10 @@ export function Playground() {
 
           <span>Oque vai ser descrito no chamado?</span>
           <Input className="border-gray-400" />
+
+          <Button onClick={
+            () => handleAddNewChildrenInSpecificArrayLayer()
+            } >Salvar</Button>
         </DialogContent>
       </Dialog>
     </div>
