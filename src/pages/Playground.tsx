@@ -1,11 +1,10 @@
-import { Fragment, useState } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "../components/ui/dialog";
 import { Input } from "../components/ui/input";
 import {
@@ -15,9 +14,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
-import { ListPlus, PlusSquare } from "lucide-react";
+import { PlusSquare } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import FormGroup from "@/components/FormGroup";
+import { useErrors } from "@/hooks/useErrors";
 
 interface IOptions {
   id: number;
@@ -46,12 +47,18 @@ interface IPhrasesObj {
 }
 
 interface IOptionToAddChildren {
-  indexArrayFather: number;
   indexArrayChildren: number;
   id: number;
   label: string;
   layer: number;
+  titleChildren: string;
+  typeChildren: IOptions['type'];
+  phraseChildren: string;
 }
+
+import { ChangeEvent } from 'react';
+
+export type InputChange = ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
 
 export function Playground() {
   const [openModal, setOpenModal] = useState(false);
@@ -124,9 +131,22 @@ export function Playground() {
     mainOption: "",
     childrens: [],
   });
-  const [optionToAddChildren, setOptionToAddChildren] = useState<IOptionToAddChildren>()
+  const [optionToAddChildren, setOptionToAddChildren] = useState<IOptionToAddChildren>({
+    id: 0,
+    label: '',
+    layer: 0,
+    indexArrayChildren: 0,
+    phraseChildren: '',
+    titleChildren: '',
+    typeChildren: 'step'
+  });
 
-  console.log(optionsChildrens);
+  const {
+    errors,
+    getErrorMessageByFieldName,
+    removeError,
+    setError
+  } = useErrors();
 
   function handleClickOption(option: string) {
     const findOption = options.find((item) => item.label === option);
@@ -154,7 +174,6 @@ export function Playground() {
           lastArrayInOptionsChildrens[lastArrayInOptionsChildrens.length - 1];
 
         if (findOption.layer >= lastObjtInLastArrayInOptionsChildrens.layer) {
-          console.log("aq");
           setOptionsChildrens((prevState) => ({
             mainOption: findOption.label,
             childrens:
@@ -200,14 +219,24 @@ export function Playground() {
     }
   }
 
-  function handleAddNewChildrenInSpecificArrayLayer(
-    childrenOption: string,
-    fatherOption: string
-  ) {
-    const findFatherInOptionsArrayChildrens = optionsChildrens.childrens
+  function handleAddNewChildrenInSpecificArrayLayer() {
+    console.log({ optionToAddChildren })
+
+    const fds = Math.random();
+    const obj: IOptions = {
+      id: fds,
+      layer: optionToAddChildren!.indexArrayChildren,
+      label: `${optionToAddChildren!.label} - ${fds}`,
+      ref: optionToAddChildren!.id,
+      phrase: `${optionToAddChildren!.label} - ${fds}`,
+      type: "step",
+    }
+    setOptions((prevState) => [...prevState, obj])
+
+    console.log(options)
   }
 
-  function addNewChildrenModal(id: number, indexArrayFather: number, indexArrayChildren: number) {
+  function addNewChildrenModal(id: number, indexArrayChildren?: number) {
     const findOption = options.find((i) => i.id === id);
 
     if (!findOption) {
@@ -220,13 +249,29 @@ export function Playground() {
       id: findOption.id,
       label: findOption.label,
       layer: findOption.layer,
-      indexArrayFather, 
-      indexArrayChildren
+      indexArrayChildren: indexArrayChildren || findOption.layer + 1,
+      phraseChildren: '',
+      titleChildren: '',
+      typeChildren: 'step'
     }
 
     setOptionToAddChildren(obj);
 
     setOpenModal(prevState => prevState !== true)
+  }
+
+  function handleChangeTitle(event: InputChange) {
+    const { value } = event.target;
+
+    if (!value) {
+      setError({ field: 'title', message: 'Dê um titulo para essa opção!' });
+    } else {
+      removeError({ fieldName: 'title' });
+    }
+    setOptionToAddChildren((prev) => {
+      const title = event.target.value;
+      return { ...prev, title };
+    });
   }
 
   const filterMainOptions = options.filter((i) => i.type === "main");
@@ -253,17 +298,17 @@ export function Playground() {
                   {option.label}
                 </button>
                 <button>
-                  <PlusSquare color="red" onClick={() => addNewChildrenModal(option.id, 1, 1)} />
+                  <PlusSquare color="red" onClick={() => addNewChildrenModal(option.id)} />
                 </button>
               </div>
             ))}
           </div>
           <div>
-            {optionsChildrens?.childrens.map((option, indexArrayFather) => {
+            {optionsChildrens?.childrens.map((option) => {
               return (
                 <div key={Math.random()} className="flex">
                   {option.map((item, indexArrayChildren) => (
-                    <div className="items-center justify-center flex flex-col">
+                    <div className="items-center justify-center flex flex-col" key={Math.random()}>
                       {item.type === "step" && (
                         <button
                           onClick={() => handleClickOption(item.label)}
@@ -289,7 +334,7 @@ export function Playground() {
                         </h2>
                       )}
                       <button className="block items-center justify-center">
-                        <PlusSquare color="red" onClick={() => addNewChildrenModal(item.id, indexArrayFather, indexArrayChildren)} />
+                        <PlusSquare color="red" onClick={() => addNewChildrenModal(item.id, indexArrayChildren)} />
                       </button>
                     </div>
                   ))}
@@ -309,12 +354,15 @@ export function Playground() {
             <DialogTitle>Então voce quer adicionar mais opções?</DialogTitle>
             <DialogDescription>
               Voce vai adicionar uma opção filho na opção "{optionToAddChildren?.label}", na
-              camada "{optionToAddChildren?.layer + 1}"
+              camada "{optionToAddChildren!.layer + 1}"
             </DialogDescription>
           </DialogHeader>
           {/* REFERENCIA DO PAI, 1 LAYER + PAI, LABEL, TYPE, PHRASE SE FOR STEP */}
-          <span>Qual vai ser o titulo dessa opção ?</span>
-          <Input className="border-gray-400" />
+
+          <FormGroup error={getErrorMessageByFieldName({ fieldName: 'title' })!} >
+            <span>Qual vai ser o titulo dessa opção ?</span>
+            <Input className="border-gray-400" onChange={handleChangeTitle} />
+          </FormGroup>
 
           <Select>
             <SelectTrigger>
