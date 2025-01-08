@@ -70,7 +70,7 @@ export function Chose() {
     {
       id: 8,
       layer: 3,
-      label: "OBservação",
+      label: "OBservação step",
       ref: 5,
       type: "stepObservation",
       phrase: "",
@@ -78,7 +78,7 @@ export function Chose() {
     {
       id: 9,
       layer: 3,
-      label: "OBservação",
+      label: "OBservação Finish",
       ref: 5,
       type: "finishObservation",
       phrase: "",
@@ -86,10 +86,18 @@ export function Chose() {
     {
       id: 10,
       layer: 3,
-      label: "OBservação",
+      label: "OBservação OS",
       ref: 5,
       type: "OSObservation",
       phrase: "",
+    },
+    {
+      id: 11,
+      layer: 4,
+      label: "step observação",
+      ref: 10,
+      type: "step",
+      phrase: "fdfdd",
     },
   ]);
   const [optionsChildrens, setOptionsChildrens] = useState<IChildrens>({
@@ -98,11 +106,11 @@ export function Chose() {
   });
   const [theContext, setTheContext] = useState<IPhrasesObj[]>([]);
 
-  console.log(optionsChildrens);
-
   function handleClickOption(option: string) {
     const findOption = options.find((item) => item.label === option);
     const findChildres = options.filter((item) => item.ref === findOption?.id);
+    console.log({findOption})
+    console.log({findChildres})
 
     if (findOption && findOption.layer === 1) {
       setOptionsChildrens({
@@ -133,7 +141,6 @@ export function Chose() {
           lastArrayInOptionsChildrens[lastArrayInOptionsChildrens.length - 1];
 
         if (findOption.layer >= lastObjtInLastArrayInOptionsChildrens.layer) {
-          console.log("aq");
           setOptionsChildrens((prevState) => ({
             mainOption: findOption.label,
             childrens:
@@ -224,7 +231,7 @@ export function Chose() {
               return (
                 <div key={Math.random()}>
                   {option.map((item) => (
-                    <Fragment>
+                    <Fragment key={Math.random()} >
                       {item.type === "step" && (
                         <button
                           onClick={() => handleClickOption(item.label)}
@@ -234,20 +241,20 @@ export function Chose() {
                         </button>
                       )}
                       {item.type === "stepObservation" && (
-                        <h2 className="p-2 bg-[#4361ee] rounded-sm m-2">
+                        <button onClick={() => handleClickOption(item.label)} className="p-2 bg-[#4361ee] rounded-sm m-2">
                           Obs: {item.label}
-                        </h2>
+                        </button>
                       )}
                       {item.type === "finishObservation" && (
-                        <h2 className="p-2 bg-[#4cc9f0] text-black font-medium rounded-sm m-2">
+                        <button onClick={() => handleClickOption(item.label)} className="p-2 bg-[#4cc9f0] text-black font-medium rounded-sm m-2">
                           Obs: {item.label}
-                        </h2>
+                        </button>
                       )}
 
                       {item.type === "OSObservation" && (
-                        <h2 className="p-2 bg-[#f6aa1c] text-black font-semibold rounded-sm m-2">
+                        <button onClick={() => handleClickOption(item.label)} className="p-2 bg-[#f6aa1c] text-black font-semibold rounded-sm m-2">
                           Obs: {item.label}
-                        </h2>
+                        </button>
                       )}
                     </Fragment>
                   ))}
