@@ -4,6 +4,7 @@ import { Toaster } from "./components/ui/sonner";
 import { Header } from "./components/header/Header";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import { Chose } from "./pages/Chose";
 
 export function App() {
   return (
@@ -11,8 +12,10 @@ export function App() {
       <ThemeProvider defaultTheme="dark" storageKey='vite-ui-theme' >
         <BrowserRouter>
           <Header />
-          <Router />
+          {/* <Router /> */}
         </BrowserRouter>
+
+        <Chose />
 
         <Toaster />
       </ThemeProvider>

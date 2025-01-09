@@ -1,5 +1,6 @@
 import { Fragment, useState } from "react";
 import { Button } from "../components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface IOptions {
   id: number;
@@ -9,9 +10,7 @@ interface IOptions {
   type:
     | "main"
     | "step"
-    | "stepObservation"
-    | "finishObservation"
-    | "OSObservation";
+    | "observation"
   phrase: string;
 }
 
@@ -68,36 +67,20 @@ export function Chose() {
       type: "step",
     },
     {
-      id: 8,
+      id: 6,
       layer: 3,
-      label: "OBservação step",
+      label: "op P3 PPP",
       ref: 5,
-      type: "stepObservation",
-      phrase: "",
-    },
-    {
-      id: 9,
-      layer: 3,
-      label: "OBservação Finish",
-      ref: 5,
-      type: "finishObservation",
-      phrase: "",
-    },
-    {
-      id: 10,
-      layer: 3,
-      label: "OBservação OS",
-      ref: 5,
-      type: "OSObservation",
-      phrase: "",
-    },
-    {
-      id: 11,
-      layer: 4,
-      label: "step observação",
-      ref: 10,
+      phrase: "escolheu a opção op P3",
       type: "step",
-      phrase: "fdfdd",
+    },
+    {
+      id: 7,
+      layer: 4,
+      label: "op P444",
+      ref: 6,
+      phrase: "escolheu a opção op P3",
+      type: "step",
     },
   ]);
   const [optionsChildrens, setOptionsChildrens] = useState<IChildrens>({
@@ -218,7 +201,7 @@ export function Chose() {
                   <button
                     type="button"
                     onClick={() => handleClickOption(option.label)}
-                    className="p-3 bg-[#002855] hover:bg-[#023e7d] transition-all m-2 rounded-lg"
+                    className="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
                   >
                     {option.label}
                   </button>
@@ -227,32 +210,23 @@ export function Chose() {
             ))}
           </div>
           <div>
-            {optionsChildrens?.childrens.map((option) => {
+            {optionsChildrens?.childrens.map((option, index) => {
+              const isCurrent = optionsChildrens.childrens.length === (index + 1)
+              // console.log(optionsChildrens.childrens.length === index + 1, option[0].label)
               return (
-                <div key={Math.random()}>
+                <div key={Math.random()} className={cn(isCurrent ? 'bg-red-500' : 'bg-white')}>
                   {option.map((item) => (
                     <Fragment key={Math.random()} >
                       {item.type === "step" && (
                         <button
                           onClick={() => handleClickOption(item.label)}
-                          className={`p-3 bg-[#560bad] hover:bg-[#7209b7] transition-all rounded-lg m-2`}
+                          className={`p-3 bg-white hover:bg-gray-200 text-black font-semibold transition-all rounded-lg m-2`}
                         >
                           {item.label}
                         </button>
                       )}
-                      {item.type === "stepObservation" && (
+                      {item.type === "observation" && (
                         <button onClick={() => handleClickOption(item.label)} className="p-2 bg-[#4361ee] rounded-sm m-2">
-                          Obs: {item.label}
-                        </button>
-                      )}
-                      {item.type === "finishObservation" && (
-                        <button onClick={() => handleClickOption(item.label)} className="p-2 bg-[#4cc9f0] text-black font-medium rounded-sm m-2">
-                          Obs: {item.label}
-                        </button>
-                      )}
-
-                      {item.type === "OSObservation" && (
-                        <button onClick={() => handleClickOption(item.label)} className="p-2 bg-[#f6aa1c] text-black font-semibold rounded-sm m-2">
                           Obs: {item.label}
                         </button>
                       )}
