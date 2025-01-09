@@ -17,8 +17,6 @@ import {
 import { Pencil, PlusSquare } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import FormGroup from "@/components/FormGroup";
-import { useErrors } from "@/hooks/useErrors";
 
 interface IOptions {
   id: number;
@@ -60,7 +58,6 @@ export type InputChange = ChangeEvent<
 
 export function Playground() {
   const [openModal, setOpenModal] = useState(false);
-
   const [options, setOptions] = useState<IOptions[]>([
     {
       id: 1,
@@ -125,6 +122,7 @@ export function Playground() {
       phrase: "",
     },
   ]);
+  
   const [optionsChildrens, setOptionsChildrens] = useState<IChildrens>({
     mainOption: "",
     childrens: [],
@@ -139,26 +137,29 @@ export function Playground() {
       phraseChildren: "",
       titleChildren: "",
       typeChildren: "step",
-    }
-  })
-    const [toAddChildrenUse, setToAddChildrenUse] = useState(false);
+    },
+  });
+  const [toAddChildrenUse, setToAddChildrenUse] = useState(false);
 
-    const [mainOptionToAdd, setMainOptionToAdd] =
-    useState<IOptions>({
+  const mainOptionToAdd = useForm<IOptions>({
+    defaultValues: {
+      id: Math.random(),
+      layer: 1,
+      label: "",
+      phrase: "",
+      type: "main",
+    },
+  });
+  const [openModalMainOption, setOpenModalMainOption] = useState(false);
+
+  const changeOption = useForm<IOptions>({
+    defaultValues: {
       id: 0,
       layer: 1,
       label: "",
       phrase: "",
       type: "main",
-    });
-    const [openModalMainOption, setOpenModalMainOption] = useState(false);
-
-  const [changeOption, setChangeOption] = useState<IOptions>({
-    id: 0,
-    layer: 1,
-    label: "",
-    phrase: "",
-    type: "main",
+    },
   });
   const [modalChangeOption, setModalChangeOption] = useState<{
     isMain: boolean;
@@ -168,18 +169,13 @@ export function Playground() {
     open: false,
   });
 
-  const { errors, getErrorMessageByFieldName, removeError, setError } =
-    useErrors();
-
   useEffect(() => {
-    handleClickOption(formOptionToAddChildren.getValues().label);
+    // handleClickOption(formOptionToAddChildren.getValues().label);
     setOpenModal(false);
     setToAddChildrenUse(false);
-    
-    formOptionToAddChildren.reset()
-  }, [toAddChildrenUse]);
 
-  console.log(formOptionToAddChildren.getValues())
+    formOptionToAddChildren.reset();
+  }, [toAddChildrenUse]);
 
   function handleClickOption(option: string) {
     const findOption = options.find((item) => item.label === option);
@@ -252,37 +248,41 @@ export function Playground() {
     }
   }
 
-  const handleAddNewChildrenInSpecificArrayLayer = formOptionToAddChildren.handleSubmit(async (optionInfos) => {
-    const {
-      indexArrayChildren,
-      titleChildren,
-      id,
-      phraseChildren,
-      typeChildren,
-    } = optionInfos;
+  const handleAddNewChildrenInSpecificArrayLayer =
+    formOptionToAddChildren.handleSubmit(async (optionInfos) => {
+      const {
+        indexArrayChildren,
+        titleChildren,
+        id,
+        phraseChildren,
+        typeChildren,
+      } = optionInfos;
 
-    if (!typeChildren) {
-      toast('Type children nao tem')
-      setOpenModal(false);
-      return;
+      if (!typeChildren) {
+        toast("Type children nao tem");
+        setOpenModal(false);
+        return;
+      }
+
+      const obj: IOptions = {
+        id: Math.random(),
+        layer: indexArrayChildren,
+        label: titleChildren,
+        ref: id,
+        phrase: phraseChildren,
+        type: typeChildren,
+      };
+      setOptions((prevState) => [...prevState, obj]);
+      setToAddChildrenUse(true);
+    });
+
+  const handleAddNewMainOption = mainOptionToAdd.handleSubmit(
+    async (optionInfos) => {
+      setOptions((prev) => [...prev, optionInfos]);
+      setOpenModalMainOption(false);
+      mainOptionToAdd.reset();
     }
-
-    const obj: IOptions = {
-      id: Math.random(),
-      layer: indexArrayChildren,
-      label: titleChildren,
-      ref: id,
-      phrase: phraseChildren,
-      type: typeChildren,
-    };
-    setOptions((prevState) => [...prevState, obj]);
-    setToAddChildrenUse(true);
-  })
-
-  function handleAddNewMainOption() {
-    setOptions((prev) => [...prev, mainOptionToAdd]);
-    setOpenModalMainOption(false);
-  }
+  );
 
   function addNewChildrenModal(id: number) {
     const findOption = options.find((i) => i.id === id);
@@ -291,57 +291,47 @@ export function Playground() {
       toast("fail");
       return;
     }
-    
-    formOptionToAddChildren.setValue('id', findOption.id);
-    formOptionToAddChildren.setValue('label', findOption.label);
-    formOptionToAddChildren.setValue('layer', findOption.layer + 1);
+
+    formOptionToAddChildren.setValue("id", findOption.id);
+    formOptionToAddChildren.setValue("label", findOption.label);
+    formOptionToAddChildren.setValue("layer", findOption.layer + 1);
 
     setOpenModal((prevState) => prevState !== true);
   }
 
-  function handleChangeFieldMain(field: keyof IOptions, value: string) {
-    setMainOptionToAdd((prev) => ({ ...prev, [field]: value }));
-    if (!value) {
-      setError({ field, message: `The field ${field} is required!` });
-    } else {
-      removeError({ fieldName: field });
-    }
-  }
-
   function handleChangeOption(id: number) {
     const findOption = options.find((item) => item.id === id);
-    if(!findOption) {
+    if (!findOption) {
       return;
     }
-    setChangeOption(findOption)
-    setModalChangeOption({ isMain: findOption.type === 'main' ? true : false, open: true });
+    setModalChangeOption({
+      isMain: findOption.type === "main" ? true : false,
+      open: true,
+    });
   }
 
-  function handleChangeFieldOption(field: keyof IOptions, value: string) {
-    setChangeOption((prev) => ({ ...prev, [field]: value }));
-  }
-
-  function saveChangesOnOption() {
+  const saveChangesOnOption = changeOption.handleSubmit(async (infos) => {
     setOptions((prevState) => {
-      return prevState.map((item) => item.id === changeOption.id
-      ? { ...item, ...changeOption }
-      : item
-    )
+      return prevState.map((item) =>
+        item.id === changeOption.getValues("id") ? { ...item, ...infos } : item
+      );
     });
     setModalChangeOption({
       isMain: false,
-      open: false
+      open: false,
     });
-    setOptionsChildrens({mainOption: '', childrens: []})
-  }
+    setOptionsChildrens({ mainOption: "", childrens: [] });
+    changeOption.reset();
+  });
 
   const filterMainOptions = options.filter((i) => i.type === "main");
-  const completedModalFormChildren =
-    formOptionToAddChildren.getValues('titleChildren') &&
-    formOptionToAddChildren.getValues('phraseChildren') &&
-    errors.length === 0;
 
-  const completedModalFormMain = mainOptionToAdd.label && mainOptionToAdd.phrase && errors.length === 0;
+  const completedModalFormMain =
+    !mainOptionToAdd.watch("label") && !mainOptionToAdd.watch("phrase");
+  const formCompleted =
+    !formOptionToAddChildren.watch("titleChildren") ||
+    !formOptionToAddChildren.watch("typeChildren") ||
+    !formOptionToAddChildren.watch("phraseChildren");
 
   return (
     <div>
@@ -355,7 +345,12 @@ export function Playground() {
             className="items-center justify-center flex flex-col"
             key={Math.random()}
           >
-            <Button className="mt-2" onClick={() => setOpenModalMainOption(true)} >Adicionar uma opção principal</Button>
+            <Button
+              className="mt-2"
+              onClick={() => setOpenModalMainOption(true)}
+            >
+              Adicionar uma opção principal
+            </Button>
           </div>
           <div className="flex justify-center">
             {filterMainOptions.map((option) => (
@@ -378,11 +373,11 @@ export function Playground() {
                     />
                   </button>
                   <button>
-                  <Pencil
-                    color="green"
-                    onClick={() => handleChangeOption(option.id)}
-                  />
-                </button>
+                    <Pencil
+                      color="green"
+                      onClick={() => handleChangeOption(option.id)}
+                    />
+                  </button>
                 </div>
               </div>
             ))}
@@ -405,18 +400,27 @@ export function Playground() {
                         </button>
                       )}
                       {item.type === "stepObservation" && (
-                        <button onClick={() => handleClickOption(item.label)} className="p-2 bg-[#4361ee] rounded-sm m-2">
+                        <button
+                          onClick={() => handleClickOption(item.label)}
+                          className="p-2 bg-[#4361ee] rounded-sm m-2"
+                        >
                           Obs: {item.label}
                         </button>
                       )}
                       {item.type === "finishObservation" && (
-                        <button onClick={() => handleClickOption(item.label)} className="p-2 bg-[#4cc9f0] text-black font-medium rounded-sm m-2">
+                        <button
+                          onClick={() => handleClickOption(item.label)}
+                          className="p-2 bg-[#4cc9f0] text-black font-medium rounded-sm m-2"
+                        >
                           Obs: {item.label}
                         </button>
                       )}
 
                       {item.type === "OSObservation" && (
-                        <button onClick={() => handleClickOption(item.label)} className="p-2 bg-[#f6aa1c] text-black font-semibold rounded-sm m-2">
+                        <button
+                          onClick={() => handleClickOption(item.label)}
+                          className="p-2 bg-[#f6aa1c] text-black font-semibold rounded-sm m-2"
+                        >
                           Obs: {item.label}
                         </button>
                       )}
@@ -424,13 +428,14 @@ export function Playground() {
                         <button className="block items-center justify-center">
                           <PlusSquare
                             color="red"
-                            onClick={() =>
-                              addNewChildrenModal(item.id)
-                            }
+                            onClick={() => addNewChildrenModal(item.id)}
                           />
                         </button>
                         <button>
-                          <Pencil color="green" onClick={() => handleChangeOption(item.id)} />
+                          <Pencil
+                            color="green"
+                            onClick={() => handleChangeOption(item.id)}
+                          />
                         </button>
                       </div>
                     </div>
@@ -457,17 +462,13 @@ export function Playground() {
           </DialogHeader>
           {/* REFERENCIA DO PAI, 1 LAYER + PAI, LABEL, TYPE, PHRASE SE FOR STEP */}
 
-          <form onSubmit={handleAddNewChildrenInSpecificArrayLayer} >
-            <FormGroup
-              error={getErrorMessageByFieldName({ fieldName: "title" })!}
-            >
-              <span>Qual vai ser o titulo dessa opção ?</span>
-              <Input
-                className="border-gray-400"
-                type="text"
-                {...formOptionToAddChildren.register('titleChildren')}
-              />
-            </FormGroup>
+          <form onSubmit={handleAddNewChildrenInSpecificArrayLayer}>
+            <span>Qual vai ser o titulo dessa opção ?</span>
+            <Input
+              className="border-gray-400 mb-3"
+              type="text"
+              {...formOptionToAddChildren.register("titleChildren")}
+            />
 
             <Controller
               name="typeChildren"
@@ -479,7 +480,9 @@ export function Playground() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="step">Step</SelectItem>
-                    <SelectItem value="stepObservation">Observação Step</SelectItem>
+                    <SelectItem value="stepObservation">
+                      Observação Step
+                    </SelectItem>
                     <SelectItem value="finishObservation">
                       Observação de Finalização
                     </SelectItem>
@@ -489,24 +492,17 @@ export function Playground() {
               )}
             />
 
-            <FormGroup
-              error={getErrorMessageByFieldName({ fieldName: "phrase" })!}
-            >
-              <span>Oque vai ser descrito no chamado?</span>
-              <Input
-                className="border-gray-400"
-                type="text"
-                {...formOptionToAddChildren.register('phraseChildren')}
-                // onChange={(e) =>
-                //   handleChangeFieldChildren("phraseChildren", e.target.value)
-                // }
-              />
-            </FormGroup>
+            <span>Oque vai ser descrito no chamado?</span>
+            <Input
+              className="border-gray-400"
+              type="text"
+              {...formOptionToAddChildren.register("phraseChildren")}
+            />
 
             <Button
-              // disabled={!completedModalFormChildren}
+              className="mt-3 w-full"
               type="submit"
-              // onClick={handleAddNewChildrenInSpecificArrayLayer}
+              disabled={formCompleted}
             >
               Salvar
             </Button>
@@ -520,105 +516,99 @@ export function Playground() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Então voce quer adicionar mais uma Opção principal?</DialogTitle>
+            <DialogTitle>
+              Então voce quer adicionar mais uma Opção principal?
+            </DialogTitle>
           </DialogHeader>
           {/* REFERENCIA DO PAI, 1 LAYER + PAI, LABEL, TYPE, PHRASE SE FOR STEP */}
 
-          <FormGroup
-            error={getErrorMessageByFieldName({ fieldName: "title" })!}
-          >
+          <form onSubmit={handleAddNewMainOption}>
             <span>Qual vai ser o titulo dessa opção ?</span>
             <Input
               className="border-gray-400"
-              onChange={(e) =>
-                handleChangeFieldMain("label", e.target.value)
-              }
+              type="text"
+              {...mainOptionToAdd.register("label")}
             />
-          </FormGroup>
 
-          <FormGroup
-            error={getErrorMessageByFieldName({ fieldName: "phrase" })!}
-          >
             <span>Oque vai ser descrito no chamado?</span>
             <Input
               className="border-gray-400"
-              onChange={(e) =>
-                handleChangeFieldMain("phrase", e.target.value)
-              }
+              type="text"
+              {...mainOptionToAdd.register("phrase")}
             />
-          </FormGroup>
 
-          <Button
-            disabled={!completedModalFormMain}
-            onClick={handleAddNewMainOption}
-          >
-            Salvar
-          </Button>
+            <Button
+              disabled={completedModalFormMain}
+              type="submit"
+              className="mt-3 w-full"
+            >
+              Salvar
+            </Button>
+          </form>
         </DialogContent>
       </Dialog>
 
       <Dialog
         open={modalChangeOption.open}
-        onOpenChange={() => setModalChangeOption((prev) => ({ ...prev, open: prev.open !== true}))}
+        onOpenChange={() =>
+          setModalChangeOption((prev) => ({
+            ...prev,
+            open: prev.open !== true,
+          }))
+        }
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Então voce quer mudar informações de alguma opção?</DialogTitle>
+            <DialogTitle>
+              Então voce quer mudar informações de alguma opção?
+            </DialogTitle>
             <DialogDescription>
               Pense antes de mudar as informações dessa opção
             </DialogDescription>
           </DialogHeader>
           {/* REFERENCIA DO PAI, 1 LAYER + PAI, LABEL, TYPE, PHRASE SE FOR STEP */}
 
-          <FormGroup
-            error={getErrorMessageByFieldName({ fieldName: "title" })!}
-          >
+          <form onSubmit={saveChangesOnOption}>
             <span>O titulo dessa opção irá mudar?</span>
             <Input
               className="border-gray-400"
-              value={changeOption.label}
-              onChange={(e) =>
-                handleChangeFieldOption("label", e.target.value)
-              }
+              type="text"
+              {...changeOption.register("label")}
             />
-          </FormGroup>
 
-          {!modalChangeOption.isMain && (
-            <Select
-              onValueChange={(value) => handleChangeFieldOption("type", value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="O tipo dessa opção irá mudar?" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="step">Step</SelectItem>
-                <SelectItem value="stepObservation">Observação Step</SelectItem>
-                <SelectItem value="finishObservation">
-                  Observação de Finalização
-                </SelectItem>
-                <SelectItem value="OSObservation">OS</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
+            {!modalChangeOption.isMain && (
+              <Select
+                onValueChange={(value: any) =>
+                  changeOption.register("type", value)
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="O tipo dessa opção irá mudar?" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="step">Step</SelectItem>
+                  <SelectItem value="stepObservation">
+                    Observação Step
+                  </SelectItem>
+                  <SelectItem value="finishObservation">
+                    Observação de Finalização
+                  </SelectItem>
+                  <SelectItem value="OSObservation">OS</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
 
-          <FormGroup
-            error={getErrorMessageByFieldName({ fieldName: "phrase" })!}
-          >
             <span>Oque vai ser descrito no chamado?</span>
             <Input
               className="border-gray-400"
-              value={changeOption.phrase}
-              onChange={(e) =>
-                handleChangeFieldOption("phrase", e.target.value)
-              }
+              type="text"
+              {...changeOption.register("phrase")}
             />
-          </FormGroup>
 
-          <Button
-            onClick={saveChangesOnOption}
-          >
-            Salvar
-          </Button>
+            <Button type="submit" className="mt-3 w-full">
+              Salvar
+            </Button>
+          </form>
         </DialogContent>
       </Dialog>
     </div>
